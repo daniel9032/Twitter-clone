@@ -1,5 +1,5 @@
 ## Overview
-The project is a Twitter like social media platform allowing user to share images and text-based posts. Additionally, the platform incorporates a social networking aspect enabling users to follow other users whose posts they wish to see in their feed.
+This project is a Twitter-like platform allowing user to share images and text-based posts. Additionally, the platform enables users to follow other users whose posts they wish to see in their feed.
 
 ## Technical Implementation
 The project utilizes Javascript, CSS and HTML for responsive and interactive web page while empowering Django as backend, PostgreSQL as database and Redis for caching data.
