@@ -1,0 +1,301 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0px;
+    box-sizing: border-box;
+    background-color: #f2f2f2;
+}
+
+li {
+    font-size: 30px;
+    padding: 10px;
+    list-style-type: none;
+}
+
+.container {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.sidebar {
+    position: fixed;
+}
+
+.sidebar-item {
+    z-index: 1;
+}
+
+.bar-1 {
+    width: 24%;
+    background-color: #fff;
+}
+
+.bar-2 {
+    width: 75%;
+    z-index: 2;
+}
+
+.sidebar-link {
+    text-decoration: none;
+    color: black;
+}
+
+.sidebar-link: hover {
+    color: black;
+}
+
+.user-header {
+    display: flex;
+}
+
+.usr {
+    display: inline;
+    font-size: 40px;
+}
+
+.follow-btn {
+    display: inline;
+    background-color: transparent;
+    border-radius: 10px;
+    font-size: 18px;
+    padding: 5px;
+    width: 100px;
+}
+
+.form-group {
+    display: flex;
+}
+
+.compose-submit-btn {
+    display: inline;
+    background-color: transparent;
+    border-radius: 10px;
+    font-size: 18px;
+    padding: 3px;
+    width: 70px;
+    height: 40px;
+    margin-top: 10px;
+    margin-left: 89%;
+}
+
+label {
+   cursor: pointer;
+   margin-top: 15px;
+   margin-left: 2px;
+   width: 30px;
+   height: 30px;
+}
+
+#image-upload-icon {
+    font-size: 30px;
+}
+
+.image-upload-btn{
+    display: inline;
+    opacity: 0;
+    position: absolute;
+    z-index: -1;
+}
+
+.user-info, .form-post, .post, .follower-block, .following-block {
+    background-color: #fff;
+    border-radius: 2px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0);
+    padding: 15px;
+    margin: 2px auto;
+    max-width: 1000px;
+}
+
+.post {
+    cursor: pointer;
+}
+
+div[name=target-post] {
+    cursor: default;
+}
+
+.post-user-link {
+    text-decoration: none;
+}
+
+.post-user-link: hover {
+    text-decoration: underline;
+}
+
+.post-header {
+    padding-left: 5px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0px;
+}
+
+.post-header h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+    margin-right: 10px;
+}
+
+.post-header span {
+    font-size: 14px;
+    color: #666;
+}
+
+.post-body {
+    padding-bottom: 0px;
+    padding-top: 5px;
+    padding-left: 5px;
+    color: #444;
+    line-height: 1;
+}
+
+.post-body.large-text {
+    font-size: 20px;
+}
+
+.post-like {
+    color: #666;
+}
+
+.heart-btn, .message-btn {
+    border: none;
+    background-color: transparent;
+    color: black;
+    cursor: pointer;
+    font-size: 15px;
+    outline: none;
+}
+
+.heart-btn i {
+    color: transparent;
+    border-color: black;
+    -webkit-text-stroke-width: 1.3px;
+    -webkit-text-stroke-color: black;
+}
+
+.heart-btn.clicked {
+    border-color: red;
+}
+
+.heart-btn.clicked i {
+    color: red;
+    -webkit-text-stroke-color: red;
+}
+
+.post-like, .post-message {
+    padding-left: 4px;
+    padding-right: 20px;
+}
+
+.preview-img {
+    border-radius: 4%;
+    padding-bottom: 10px;
+    cursor: pointer;
+}
+
+.dropdown {
+    margin-left: auto;
+}
+
+.dropdown-toggle-btn {
+    border-color: transparent;
+    background-color: transparent;
+}
+
+.dropdown-menu {
+    margin: 0px;
+}
+
+.dropdown-item {
+    padding-bottom: 0px;
+    margin: 0px;
+}
+
+.popup {
+    background-color: rgba(0, 0, 0, 0.8);
+    opacity: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.popup.open {
+    opacity: 1;
+    z-index: 999;
+}
+
+.popup-background {
+    width: 600px;
+    height: 600px;
+    background-color: #f2f2f2;
+    border-radius: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.popup-compose-body {
+    margin-top: 0px;
+    margin-left: 30px;
+    margin-right: 30px;
+    width: 90%;
+    height: 475px;
+    align-items: center;
+    border-color: transparent;
+    background-color: #fff;
+    border-radius: 5px;
+}
+
+.popup-submit-btn {
+    background-color: #fff;
+    border-radius: 10px;
+    font-size: 18px;
+    padding: 5px;
+    width: 90%;
+    margin-left: 30px;
+    margin-right: 30px;
+}
+
+.popup-close-btn {
+    font-size: 30px;
+    margin-left: 550px; /* add some margin */
+    margin-top: 10px; /* add some margin */
+    background-color: transparent;
+    border-color: transparent;
+}
+
+.popup-close-image-btn {
+    position: fixed;
+}
+
+.row-follower, .row-following {
+    width: 200px;
+}
+
+#follower-btn, #following-btn {
+    font-size: 20px;
+    border-color: transparent;
+}
+
+.list-follower, .list-following {
+    font-size: 20px;
+}
+
+.follow-name {
+    text-decoration: none;
+    color: black;
+    font-size: 25px;
+    display: inline;
+}
+
+.follow-btn-wrapper {
+    display: inline;
+    margin-top: 15px;
+    margin-left: 78%;
+}

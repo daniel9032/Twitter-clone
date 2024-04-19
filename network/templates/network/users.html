@@ -1,0 +1,52 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block body %}
+    <div class="user-info">
+        <div class="user-header">
+            <p class="usr" id="user-name">{{ user.username }}</p>
+            {% if request.user.is_authenticated and user != request.user %}
+                <div class="follow-btn-wrapper">
+                    <button class="follow-btn" type="button" id="follow-button"></button>
+                </div>
+            {% endif %}
+        </div>
+        <div>
+            <a href="{% url 'follower' username=user.username %}" style="text-decoration: none; color: black;">
+                <p id="follower-count" style="display: inline-block;"></p>
+                <p style="display: inline-block;">Followers</p>
+            </a>
+            <p style="display: inline-block; margin-right: 10px;"></p>
+            <a href="{% url 'following' username=user.username %}" style="text-decoration: none; color: black;">
+                <p id="following-count" style="display: inline-block;"></p>
+                <p style="display: inline-block;">Following</p>
+            </a>
+        </div>
+    </div>
+
+    {% if request.user.is_authenticated and user == request.user %}
+        <div class="form-post">
+            <div>
+                <form id="create-post" method="post">
+                    <div class="form-group">
+                        <textarea class="form-control" id="compose-body" placeholder="What is happening?!"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="image-upload">
+                            <i class="fa-solid fa-image" id="image-upload-icon"></i>
+                        </label>
+                        <input type="file" id="image-upload" class="image-upload-btn" accept="image/png, image/jpeg"/>
+                        <input type="submit" class="compose-submit-btn" id="compose-submit" value="Post"/>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+    
+	<div id="main-frame"></div>
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'network/layout.js' %}"></script>
+    <script type="module" src="{% static 'network/users.js' %}"></script>
+{% endblock %}

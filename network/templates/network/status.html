@@ -1,0 +1,35 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block body %}
+    <p id="post_id" hidden>{{ post_id }}</p>
+    <div id="parent-post"></div>
+    <div id="target-post"></div>
+
+    {% if user.is_authenticated %}
+        <div class="form-post">
+            <div>
+                <form id="create-comment" method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <textarea class="form-control" id="compose-body" placeholder="Post your reply"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="image-upload">
+                            <i class="fa-solid fa-image" id="image-upload-icon"></i>
+                        </label>
+                        <input type="file" id="image-upload" class="image-upload-btn" accept="image/png, image/jpeg"/>
+                        <input type="submit" class="compose-submit-btn" id="compose-submit" value="Reply"/>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+    
+	<div id="child-post"></div>
+{% endblock %}
+
+{% block script %}
+    <script type="module" src="{% static 'network/status.js' %}"></script>
+    <script src="{% static 'network/layout.js' %}"></script>
+{% endblock %}

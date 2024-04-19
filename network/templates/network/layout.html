@@ -1,0 +1,74 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <title>{% block title %}Social Network{% endblock %}</title>
+        {% csrf_token %}
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+        <link href="{% static 'network/styles.css' %}" rel="stylesheet">
+    </head>
+
+    <body>
+        <div class="container">
+            <div class="bar-1">
+                <div class="sidebar">
+                    <ul class="">
+                        {% if request.user.is_authenticated %}
+                            <li class="sidebar-item">
+                                <a class="sidebar-link" href="{% url 'users' username=request.user.username %}">Profile</a>
+                            </li>
+                        {% endif %}
+                        <li class="sidebar-item">
+                            <a class="sidebar-link" href="{% url 'index' %}">Home</a>
+                        </li>
+                        {% if request.user.is_authenticated %}
+                            <li class="sidebar-item">
+                                <a class="sidebar-link" href="{% url 'feed_following' %}">Following</a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a class="sidebar-link" href="{% url 'logout' %}" id="log-out">Log Out</a>
+                            </li>
+                        {% else %}
+                            <li class="sidebar-item">
+                                <a class="sidebar-link" href="{% url 'login' %}" id="log-in">Log In</a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a class="sidebar-link" href="{% url 'register' %}">Register</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            <div class="bar-2">
+                <div class="body">
+                    {% block body %}
+                    {% endblock %}
+                </div>  
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            const log_out_button = document.querySelector('#log-out');
+            const log_in_button = document.querySelector('#log-in');
+
+            if(log_out_button){
+                log_out_button.addEventListener('click', () => {
+                    localStorage.clear();
+                })
+            }
+
+            if(log_in_button){
+                log_in_button.addEventListener('click', () => {
+                    localStorage.clear();
+                })
+            }
+        </script>
+    </body>
+</html>
+
+{% block script %}
+{% endblock %}

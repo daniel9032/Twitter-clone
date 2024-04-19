@@ -1,0 +1,35 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block body %}
+
+    {% if request.user.is_authenticated %}
+        <div class="form-post">
+            <div>
+                <form id="create-post" method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <h2>{{ request.user }}</h2>
+                    </div>
+                    <div class="form-group">
+                        <textarea class="form-control" id="compose-body" placeholder="What is happening?!"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="image-upload">
+                            <i class="fa-solid fa-image" id="image-upload-icon"></i>
+                        </label>
+                        <input type="file" id="image-upload" class="image-upload-btn" accept="image/png, image/jpeg"/>
+                        <input type="submit" class="compose-submit-btn" id="compose-submit" value="Post"/>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+
+    <div id="main-frame"></div>
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'network/layout.js' %}"></script>
+    <script type="module" src="{% static 'network/index.js' %}"></script>
+{% endblock %}

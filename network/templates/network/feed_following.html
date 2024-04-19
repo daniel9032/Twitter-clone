@@ -1,0 +1,30 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block body %}
+    <div class="form-post">
+        {% if request.user.is_authenticated %}
+            <div>
+                <form id="create-post" method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <h2>{{ request.user }}</h2>
+                    </div>
+                    <div class="form-group">
+                        <textarea class="form-control" id="compose-body" placeholder="What is happening?!"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <input type="submit" class="btn btn-primary" id="compose-submit" value="Post"/>
+                    </div>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+
+    <div id="main-frame"></div>
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'network/layout.js' %}"></script>
+    <script type="module" src="{% static 'network/feed_following.js' %}"></script>
+{% endblock %}
