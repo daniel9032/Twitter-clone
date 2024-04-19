@@ -13,6 +13,7 @@ The API implementaion follows RESTful API principles.
 ### Python Libraries
 - PILLOW v10.2.0
 - dateutil v2.9.0
+- Django Debug Toolbar
 
 ## Installation
 1. Clone the repository: `git clone https://github.com/daniel9032/Twitter-clone`
