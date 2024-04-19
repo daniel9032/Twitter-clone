@@ -22,4 +22,5 @@ The API implementaion follows RESTful API principles.
 ## Usage
 1. Go to the main directory
 2. Start the server by running: `python manage.py runserver`
-3. Open your web browser and navigate to `http://localhost:8000`
+3. On first time starting, running `python manage.py makemigrations network` `python manage.py migrate network` `python manage.py migrate` to apply all migrations
+4. Open your web browser and navigate to `http://127.0.0.1:8000`
