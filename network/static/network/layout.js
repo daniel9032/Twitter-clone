@@ -19,7 +19,7 @@ if(compose_submit){
 				let data = {
 					image: reader.result,
 					body: body,
-					parent_post_id: post_id
+					parent_post_id: post_id,
 				};
 				post(data, csrfToken);
 			};
@@ -30,6 +30,7 @@ if(compose_submit){
 		else{
 			let data = {
 				body: body,
+				parent_post_id: post_id,
 			};
 			post(data, csrfToken);
 		}

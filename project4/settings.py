@@ -82,10 +82,21 @@ DATABASES = {
         'NAME': 'network',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
-        'HOST': '',
+        'HOST': '127.0.0.1',
         'PORT': '5432', 
     }
 }
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379',
+    }
+}
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
+SESSION_COOKIE_AGE = 86400
 
 AUTH_USER_MODEL = "network.User"
 
@@ -108,10 +119,9 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# For local host
-INTERNAL_IPS = [
-    "127.0.0.1",
-]
+# Display Django Debug Tool if on debug mode
+if DEBUG:
+    INTERNAL_IPS = ["127.0.0.1"]
 
 
 # Internationalization

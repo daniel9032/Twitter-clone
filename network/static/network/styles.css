@@ -245,7 +245,7 @@ div[name=target-post] {
     margin-left: 30px;
     margin-right: 30px;
     width: 90%;
-    height: 475px;
+    height: 450px;
     align-items: center;
     border-color: transparent;
     background-color: #fff;
@@ -262,10 +262,21 @@ div[name=target-post] {
     margin-right: 30px;
 }
 
+.popup-header {
+    display: flex;
+}
+
+.popup-header-text {
+    text-align: center;
+    font-size: 25px;
+    margin-top: 20px;
+    margin-left: 40%;
+}
+
 .popup-close-btn {
     font-size: 30px;
-    margin-left: 550px; /* add some margin */
-    margin-top: 10px; /* add some margin */
+    margin-top: 10px;
+    margin-left: 35%;
     background-color: transparent;
     border-color: transparent;
 }

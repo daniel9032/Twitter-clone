@@ -129,17 +129,12 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 								window.location.href = `${host}/login`;
 							}
 							else if(data.action === "switch_to_unlike"){
-								if(like_button.classList.contains('red')){
-									like_button.classList.toggle('clicked');
-								}
-								else{
-									like_button.classList.add('clicked');
-								}
+								like_button.classList.add('clicked');
 								localStorage.setItem(`is_liked__post_id_${post_id}`, 'true');
 								document.querySelector(`#post-like-${post_id}`).innerHTML = Number(document.querySelector(`#post-like-${post_id}`).innerHTML) + 1;
 							}
 							else if(data.action === "switch_to_like"){
-								like_button.classList.toggle('clicked');
+								like_button.classList.remove('clicked');
 								localStorage.setItem(`is_liked__post_id_${post_id}`, 'false');
 								document.querySelector(`#post-like-${post_id}`).innerHTML = Number(document.querySelector(`#post-like-${post_id}`).innerHTML) - 1;
 							}
@@ -160,6 +155,8 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 						let edit_compose_popup = document.createElement('div');
 						let edit_compose_form = document.createElement('form');
 						let edit_compose_background = document.createElement('div');
+						let edit_compose_header = document.createElement('div');
+						let edit_compose_header_text = document.createElement('p');
 						let edit_compose_body_block = document.createElement('div');
 						let edit_compose_body = document.createElement('textarea');
 						let edit_compose_submit_block = document.createElement('div');
@@ -168,12 +165,15 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 						let x_icon = document.createElement('i');
 
 						edit_compose_popup.setAttribute("class", "popup");
+						edit_compose_header.setAttribute("class", "popup-header");
+						edit_compose_header_text.setAttribute("class", "popup-header-text");
 						edit_compose_background.setAttribute("class", "popup-background");
 						edit_compose_body.setAttribute("class", "popup-compose-body");
 						edit_compose_submit.setAttribute("class", "popup-submit-btn");
 						x_icon.setAttribute("class", "fa-solid fa-xmark");
 						close_popup_button.setAttribute("class", "popup-close-btn");
 
+						edit_compose_header_text.innerHTML = 'Edit post';
 						edit_compose_body.innerHTML = p.body;
 						edit_compose_submit.innerHTML = "Save";
 
@@ -182,7 +182,9 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 						edit_compose_submit_block.append(edit_compose_submit);
 						edit_compose_form.append(edit_compose_body_block);
 						edit_compose_form.append(edit_compose_submit_block);
-						edit_compose_background.append(close_popup_button);
+						edit_compose_header.append(edit_compose_header_text);
+						edit_compose_header.append(close_popup_button);
+						edit_compose_background.append(edit_compose_header);
 						edit_compose_background.append(edit_compose_form);
 						edit_compose_popup.append(edit_compose_background);
 
@@ -235,12 +237,9 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 					dropdown_item_follow.addEventListener('click', function(event) {
 						event.stopPropagation();
 						dropdown_toggle_button.nextElementSibling.classList.toggle('show');
-						fetch(`/is_following?username=${user}`, {
-							method: "GET",
-						})
-						.then(response => response.json())
-						.then(data => {
-							if(data.is_following){
+						if(localStorage.getItem(`is_following__username_${user}`)){
+							let is_following = localStorage.getItem(`is_following__username_${user}`);
+							if(is_following === 'true'){
 								fetch(`/unfollow`, {
 									method: "POST",
 									headers: {
@@ -252,7 +251,7 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 								})
 								.then(response => response.json())
 								.then(message => {
-									console.log(message);
+									//console.log(message);
 									dropdown_item_follow.innerHTML = `Follow ${user}`;
 									let follow_button = document.querySelector('#follow-button');
 									let follower_count = document.querySelector('#follower-count');
@@ -262,6 +261,7 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 									if(follower_count){
 										follower_count.innerHTML = Number(follower_count.innerHTML) - 1;
 									}
+									localStorage.setItem(`is_following__username_${user}`, 'false');
 								});
 							}
 							else{
@@ -276,7 +276,7 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 								})
 								.then(response => response.json())
 								.then(message => {
-									console.log(message);
+									//console.log(message);
 									dropdown_item_follow.innerHTML = `Unfollow ${user}`;
 									let follow_button = document.querySelector('#follow-button');
 									let follower_count = document.querySelector('#follower-count');
@@ -286,9 +286,67 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 									if(follower_count){
 										follower_count.innerHTML = Number(follower_count.innerHTML) + 1;
 									}
+									localStorage.setItem(`is_following__username_${user}`, 'true');
 								});
 							}
-						});
+						}
+						else{
+							fetch(`/is_following?username=${user}`, {
+								method: "GET",
+							})
+							.then(response => response.json())
+							.then(data => {
+								if(data.is_following){
+									fetch(`/unfollow`, {
+										method: "POST",
+										headers: {
+											'X-CSRFToken': csrf_token
+										},
+										body: JSON.stringify({
+								        	username: user
+								        })
+									})
+									.then(response => response.json())
+									.then(message => {
+										console.log(message);
+										dropdown_item_follow.innerHTML = `Follow ${user}`;
+										let follow_button = document.querySelector('#follow-button');
+										let follower_count = document.querySelector('#follower-count');
+										if(follow_button){
+											follow_button.innerHTML = 'Follow';
+										}
+										if(follower_count){
+											follower_count.innerHTML = Number(follower_count.innerHTML) - 1;
+										}
+									});
+								}
+								else{
+									fetch(`/follow`, {
+										method: "POST",
+										headers: {
+											'X-CSRFToken': csrf_token
+										},
+										body: JSON.stringify({
+								        	username: user
+								        })
+									})
+									.then(response => response.json())
+									.then(message => {
+										console.log(message);
+										dropdown_item_follow.innerHTML = `Unfollow ${user}`;
+										let follow_button = document.querySelector('#follow-button');
+										let follower_count = document.querySelector('#follower-count');
+										if(follow_button){
+											follow_button.innerHTML = 'Unfollow';
+										}
+										if(follower_count){
+											follower_count.innerHTML = Number(follower_count.innerHTML) + 1;
+										}
+									});
+								}
+							});
+							localStorage.setItem(`is_following__username_${user}`, data.is_following);
+						}
 					})
 
 					const urls = [
@@ -300,6 +358,9 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 						let is_liked = localStorage.getItem(`is_liked__post_id_${post_id}`);
 						if(is_liked === 'true'){
 							like_button.classList.add('clicked');
+						}
+						else{
+							like_button.classList.remove('clicked');
 						}
 					}
 					else{
@@ -348,6 +409,9 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 								else if(data.is_liked !== undefined){
 									if(data.is_liked){
 										like_button.classList.add('clicked');
+									}
+									else{
+										like_button.classList.remove('clicked');
 									}
 									localStorage.setItem(`is_liked__post_id_${post_id}`, data.is_liked);
 								}
