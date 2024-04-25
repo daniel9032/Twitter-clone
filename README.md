@@ -14,6 +14,9 @@ The API implementaion follows RESTful API principles.
 - PILLOW v10.2.0
 - dateutil v2.9.0
 - Django Debug Toolbar
+- Gunicorn v22.0.0
+- Redis v5.0.4
+- Hiredis v2.3.2
 
 ## Installation
 1. Clone the repository: `git clone https://github.com/daniel9032/Twitter-clone`
