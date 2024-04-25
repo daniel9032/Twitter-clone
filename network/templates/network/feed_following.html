@@ -14,7 +14,11 @@
                         <textarea class="form-control" id="compose-body" placeholder="What is happening?!"></textarea>
                     </div>
                     <div class="form-group">
-                        <input type="submit" class="btn btn-primary" id="compose-submit" value="Post"/>
+                        <label for="image-upload">
+                            <i class="fa-solid fa-image" id="image-upload-icon"></i>
+                        </label>
+                        <input type="file" id="image-upload" class="image-upload-btn" accept="image/png, image/jpeg"/>
+                        <input type="submit" class="compose-submit-btn" id="compose-submit" value="Post"/>
                     </div>
                 </form>
             </div>

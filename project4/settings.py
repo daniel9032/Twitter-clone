@@ -23,10 +23,28 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '13kl@xtukpwe&xj2xoysxe9_6=tf@f8ewxer5n&ifnd46+6$%8'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost']
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'gunicorn': {
+            'level': 'ERROR',  # Adjust as needed
+            'class': 'logging.FileHandler',
+            'filename': '/var/log/gunicorn/error.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['gunicorn'],  # Use the gunicorn handler for Django's logs
+            'level': 'ERROR',  # Adjust as needed
+            'propagate': True,
+        },
+    },
+}
 
 # Application definition
 
@@ -82,7 +100,7 @@ DATABASES = {
         'NAME': 'network',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
-        'HOST': '127.0.0.1',
+        'HOST': 'localhost',
         'PORT': '5432', 
     }
 }
@@ -142,7 +160,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'network/static')
+STATIC_ROOT = '/static'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'network/media')
+MEDIA_ROOT = '/static/network/media'

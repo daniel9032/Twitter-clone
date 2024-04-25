@@ -1,4 +1,6 @@
 __pycache__/
 media/
 migrations/
+venv/
 __init__.py
+settings.py

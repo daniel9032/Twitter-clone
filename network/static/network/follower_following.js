@@ -4,7 +4,6 @@ const request_user = document.querySelector('#request_user').innerText;
 const follower_following = document.querySelector('#follower_following').innerText;
 const follower_button = document.querySelector('#follower-btn');
 const following_button = document.querySelector('#following-btn');
-const host = 'http://127.0.0.1:8000';
 
 fetch_follower();
 fetch_following();
@@ -54,7 +53,7 @@ function fetch_follower(){
 				follower_block.setAttribute("class", "follower-block");
 				follow_button.setAttribute("class", "follow-btn");
 				follower_name.setAttribute("class", "follow-name");
-				follower_name.setAttribute("href", `${host}/users/${follower}`);
+				follower_name.setAttribute("href", `/users/${follower}`);
 				follow_button_wrapper.setAttribute("class", "follow-btn-wrapper");
 
 				if(localStorage.getItem(`is_following__username_${follower}`)){
@@ -166,7 +165,7 @@ function fetch_following(){
 				follower_block.setAttribute("class", "follower-block");
 				follow_button.setAttribute("class", "follow-btn");
 				follower_name.setAttribute("class", "follow-name");
-				follower_name.setAttribute("href", `${host}/users/${following}`);
+				follower_name.setAttribute("href", `/users/${following}`);
 				follow_button_wrapper.setAttribute("class", "follow-btn-wrapper");
 
 				if(localStorage.getItem(`is_following__username_${following}`)){

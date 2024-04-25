@@ -7,7 +7,6 @@ let page_obj = {
 }
 
 const user = document.querySelector('#user-name').innerHTML;
-const host = 'http://127.0.0.1:8000';
 const csrfToken = document.querySelector('[name="csrfmiddlewaretoken"]').value;
 const follow_button = document.querySelector('#follow-button');
 const follower_count = document.querySelector('#follower-count');
@@ -142,9 +141,9 @@ function follow(){
 }
 
 function show_followers(){
-	window.location.href = `${host}/users/${user}/follower`;
+	window.location.href = `/users/${user}/follower`;
 }
 
 function show_followings(){
-	window.location.href = `${host}/users/${user}/following`;
+	window.location.href = `/users/${user}/following`;
 }

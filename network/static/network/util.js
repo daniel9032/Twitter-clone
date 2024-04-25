@@ -1,5 +1,4 @@
 export function load_page(op_string, page_obj, csrf_token, div_name){
-	const host = 'http://127.0.0.1:8000';
 	fetch(op_string, {
 		method: "GET"
 	})
@@ -54,7 +53,7 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 					}
 					if(!(index === 0 && div_name === '#parent-post')){
 						post.addEventListener('click', () => {
-							window.location.href = `${host}/status/${post_id}`;
+							window.location.href = `/status/${post_id}`;
 						})
 					}
 					// last object in the page
@@ -64,7 +63,7 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 					}
 					
 					user_name.setAttribute("class", "post-user-name");
-					user_link.setAttribute("href", `${host}/users/${user}`);
+					user_link.setAttribute("href", `/users/${user}`);
 					user_link.setAttribute("class", "post-user-link");
 					heart_icon.setAttribute("class", "fas fa-heart");
 					like_button.setAttribute("class", "heart-btn");
@@ -126,7 +125,7 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 						.then(data => {
 							console.log(data);
 							if(data.action === "prompt_loggin"){
-								window.location.href = `${host}/login`;
+								window.location.href = `/login`;
 							}
 							else if(data.action === "switch_to_unlike"){
 								like_button.classList.add('clicked');
