@@ -465,7 +465,7 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 									});
 
 									close_popup_button.append(x_icon);
-									img_popup_background.append(close_popup_button);
+									//img_popup_background.append(close_popup_button);
 									img_popup_background.append(image);
 									img_popup.append(img_popup_background);
 

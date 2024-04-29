@@ -321,7 +321,7 @@ def post(request):
                             user = User.objects.get(username=username)
                             following_list = user.following.all().select_related('user')
                             if following_list:
-                                posts = Post.objects.filter(user__in=[following.user for following in following_list], id__lt=cursor).order_by('-timestamp')[:PAGE_SIZE].prefetch_related('user')
+                                posts = Post.objects.filter(user__in=[following.user for following in following_list] + [user], id__lt=cursor).order_by('-timestamp')[:PAGE_SIZE].prefetch_related('user')
                                 if not posts:
                                     return JsonResponse([{"is_end": True}], safe=False)
                                 return JsonResponse([{'cursor': posts[len(posts) - 1].id}] + [post.serialize() | {'user': post.user.username} for post in posts], safe=False)

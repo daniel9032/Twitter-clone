@@ -283,6 +283,10 @@ div[name=target-post] {
 
 .popup-close-image-btn {
     position: fixed;
+    top: 0;
+    left: 0;
+    background-color: transparent;
+    color: #fff;
 }
 
 .row-follower, .row-following {
