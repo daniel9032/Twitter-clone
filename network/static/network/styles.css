@@ -158,7 +158,7 @@ div[name=target-post] {
     color: #666;
 }
 
-.heart-btn, .message-btn {
+.heart-btn, .message-btn, .repost-btn {
     border: none;
     background-color: transparent;
     color: black;
@@ -183,9 +183,21 @@ div[name=target-post] {
     -webkit-text-stroke-color: red;
 }
 
-.post-like, .post-message {
-    padding-left: 4px;
-    padding-right: 20px;
+.repost-btn.clicked {
+    border-color: lightgreen;
+}
+
+.repost-btn.clicked i {
+    color: lightgreen;
+    -webkit-text-stroke-color: lightgreen;
+}
+
+.post-like, .post-message, .post-share {
+    margin-left: 4px;
+}
+
+.post-footer-padding {
+    padding-right: 30px;
 }
 
 .preview-img {
@@ -313,4 +325,9 @@ div[name=target-post] {
     display: inline;
     margin-top: 15px;
     margin-left: 78%;
+}
+
+.repost-link {
+    text-decoration: none;
+    color: black;
 }

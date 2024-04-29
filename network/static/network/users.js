@@ -1,7 +1,7 @@
 import { load_page } from './util.js'
 
 let page_obj = {
-	cursor: 999999999,
+	cursor: null,
 	prev_cursor: -1,
 	is_end: false,
 }

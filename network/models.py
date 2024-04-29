@@ -47,6 +47,7 @@ class Post(models.Model):
             "body": self.body,
             "timestamp": self.human_readable_time(),
             "is_public": self.is_public,
+            "user": self.user.username,
             "image_url": image_url,
             "preview_image_url": preview_image_url,
         }
@@ -55,3 +56,9 @@ class Post(models.Model):
 class Follower(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     follower = models.ManyToManyField(User, related_name='following')
+
+
+class Repost(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)

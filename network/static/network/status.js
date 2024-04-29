@@ -3,7 +3,7 @@ import { load_page } from './util.js'
 const csrfToken = document.querySelector('[name="csrfmiddlewaretoken"]').value;
 const post_id = document.querySelector('#post_id').innerText;
 let page_obj = {
-	cursor: 999999999,
+	cursor: null,
 	prev_cursor: -1,
 	is_end: false,
 }

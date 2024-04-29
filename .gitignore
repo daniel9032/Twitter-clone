@@ -3,4 +3,4 @@ media/
 migrations/
 venv/
 __init__.py
-project4/settings.py
+project4/

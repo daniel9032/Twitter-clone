@@ -2,7 +2,7 @@ import { load_page } from './util.js'
 const csrfToken = document.querySelector('[name="csrfmiddlewaretoken"]').value;
 
 let page_obj = {
-	cursor: 999999999,
+	cursor: null,
 	prev_cursor: -1,
 	is_end: false,
 }

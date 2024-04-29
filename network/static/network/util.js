@@ -17,12 +17,16 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 				else{
 					const post_id = p.post_id;
 					const user = p.user;
+					const repost_user = p.repost_user;
 					const image_url = p.image_url;
 					const preview_image_url = p.preview_image_url;
 					let post = document.createElement('div');
+					let post_header_repost = document.createElement('div');
 					let post_header = document.createElement('div');
 					let post_body = document.createElement('div');
 					let post_footer = document.createElement('div');
+					let post_footer_padding1 = document.createElement('span');
+					let post_footer_padding2 = document.createElement('span');
 					let user_name = document.createElement('h2');
 					let user_link = document.createElement('a');
 					let preview_image = document.createElement('img');
@@ -35,6 +39,9 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 					let message_number = document.createElement('span');
 					let message_button = document.createElement('button');
 					let message_icon = document.createElement('i');
+					let repost_number = document.createElement('span');
+					let repost_button = document.createElement('button');
+					let repost_icon = document.createElement('i');
 					let dropdown_container = document.createElement('div');
 					let dropdown_toggle_button = document.createElement('button');
 					let dropdown_icon = document.createElement('i');
@@ -68,10 +75,17 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 					heart_icon.setAttribute("class", "fas fa-heart");
 					like_button.setAttribute("class", "heart-btn");
 					like_number.setAttribute("class", "post-like");
-					like_number.setAttribute("id", `post-like-${post_id}`)
+					like_number.setAttribute("id", `post-like-${post_id}`);
 					message_number.setAttribute("class", "post-message");
 					message_icon.setAttribute("class", "fa-regular fa-message");
 					message_button.setAttribute("class", "message-btn");
+					repost_number.setAttribute("class", "post-share");
+					repost_number.setAttribute("id", `post-share-${post_id}`);
+					repost_icon.setAttribute("class", "fa-solid fa-retweet");
+					repost_button.setAttribute("class", "repost-btn");
+					post_footer_padding1.setAttribute("class", "post-footer-padding");
+					post_footer_padding2.setAttribute("class", "post-footer-padding");
+					post_header_repost.setAttribute("class", "post-header-repost");
 					dropdown_container.setAttribute("class", "dropdown");
 					dropdown_container.setAttribute("display", "inline");
 					dropdown_toggle_button.setAttribute("class", "dropdown-toggle-btn");
@@ -97,6 +111,8 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 					like_button.append(like_number);
 					message_button.append(message_icon);
 					message_button.append(message_number);
+					repost_button.append(repost_icon);
+					repost_button.append(repost_number);
 					dropdown_toggle_button.append(dropdown_icon);
 					dropdown_container.append(dropdown_toggle_button);
 					dropdown_container.append(dropdown_menu);
@@ -104,11 +120,26 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 					post_header.append(timestamp);
 					post_header.append(dropdown_container);
 					post_body.append(body);
-					post_footer.append(like_button);
 					post_footer.append(message_button);
+					post_footer.append(post_footer_padding1);
+					post_footer.append(repost_button);
+					post_footer.append(post_footer_padding2);
+					post_footer.append(like_button);
+					if(repost_user){
+						let repost_link = document.createElement('a');
+						let repost_icon = document.createElement('i');
+						repost_link.setAttribute('href', `/users/${repost_user}`);
+						repost_link.setAttribute('class', 'repost-link');
+						repost_icon.setAttribute('class', 'fa-solid fa-retweet');
+						repost_link.innerHTML = ` ${repost_user} reposted`;
+						post_header_repost.append(repost_icon);
+						post_header_repost.append(repost_link);
+						post.append(post_header_repost);
+					}
 					post.append(post_header);
 					post.append(post_body);
 					post.append(post_footer);
+
 
 					like_button.addEventListener('click', function(event) {
 						event.stopPropagation();
@@ -139,6 +170,36 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 							}
 							else{
 								console.log('invalid action');
+							}
+						})
+					})
+
+					repost_button.addEventListener('click', function(event) {
+						event.stopPropagation();
+						fetch('/repost', {
+							method: "POST",
+							body: JSON.stringify({
+								post_id: post_id
+							}),
+							headers: {
+								'X-CSRFToken': csrf_token
+							}
+						})
+						.then(response => response.json())
+						.then(data => {
+							console.log(data.message);
+							if(data.message === "prompt_loggin"){
+								window.location.href = `/login`;
+							}
+							else if(data.message === "Post shared."){
+								repost_button.classList.add('clicked');
+								localStorage.setItem(`is_shared__post_id_${post_id}`, 'true');
+								document.querySelector(`#post-share-${post_id}`).innerHTML = Number(document.querySelector(`#post-share-${post_id}`).innerHTML) + 1;
+							}
+							else{
+								repost_button.classList.remove('clicked');
+								localStorage.setItem(`is_shared__post_id_${post_id}`, 'false');
+								document.querySelector(`#post-share-${post_id}`).innerHTML = Number(document.querySelector(`#post-share-${post_id}`).innerHTML) - 1;
 							}
 						})
 					})
@@ -351,6 +412,7 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 					const urls = [
 						`/like_number?post_id=${post_id}`,
 						`/message_number?post_id=${post_id}`,
+						`/repost_number?post_id=${post_id}`,
 					]
 
 					if(localStorage.getItem(`is_liked__post_id_${post_id}`)){
@@ -364,6 +426,19 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 					}
 					else{
 						urls.push(`/is_liked?post_id=${post_id}`);
+					}
+
+					if(localStorage.getItem(`is_shared__post_id_${post_id}`)){
+						let is_shared = localStorage.getItem(`is_shared__post_id_${post_id}`);
+						if(is_shared === 'true'){
+							repost_button.classList.add('clicked');
+						}
+						else{
+							repost_button.classList.remove('clicked');
+						}
+					}
+					else{
+						urls.push(`/is_shared?post_id=${post_id}`);
 					}
 
 					if(localStorage.getItem(`is_original_poster__post_id_${post_id}`)){
@@ -405,6 +480,9 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 								else if(data.message_number !== undefined){
 									message_number.innerText = data.message_number;
 								}
+								else if(data.repost_number !== undefined){
+									repost_number.innerText = data.repost_number;
+								}
 								else if(data.is_liked !== undefined){
 									if(data.is_liked){
 										like_button.classList.add('clicked');
@@ -413,6 +491,15 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 										like_button.classList.remove('clicked');
 									}
 									localStorage.setItem(`is_liked__post_id_${post_id}`, data.is_liked);
+								}
+								else if(data.is_shared !== undefined){
+									if(data.is_shared){
+										repost_button.classList.add('clicked');
+									}
+									else{
+										repost_button.classList.remove('clicked');
+									}
+									localStorage.setItem(`is_shared__post_id_${post_id}`, data.is_shared);
 								}
 								else if(data.is_original_poster !== undefined){
 									if(data.is_original_poster){
