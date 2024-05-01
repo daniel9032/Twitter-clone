@@ -1,8 +1,9 @@
 ## Project Link
 https://www.daniel9032-project.xyz/
+
 Testing account:
-Username: daniel
-Password: daniel123
+- Username: daniel
+- Password: daniel123
 
 ## Overview
 This project is a Twitter-like platform allowing user to share images and text-based posts. Additionally, the platform enables users to follow other users whose posts they wish to see in their feed.
