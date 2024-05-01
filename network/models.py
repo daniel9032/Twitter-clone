@@ -4,8 +4,6 @@ from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 
 class User(AbstractUser):
-    pass
-
     class Meta:
         indexes = [models.Index(fields=['username'])]
 

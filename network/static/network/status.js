@@ -22,9 +22,9 @@ window.onscroll = function() {
 
 
 function load_parent_posts(post_id){
-	load_page(`/post?operation=parent&post_id=${post_id}`, page_obj, csrfToken, '#parent-post');
+	load_page(`/posts?operation=parent&post_id=${post_id}`, page_obj, csrfToken, '#parent-post');
 }
 
 function load_child_posts(post_id){
-	load_page(`/post?operation=child&post_id=${post_id}&cursor=${page_obj.cursor}`, page_obj, csrfToken, '#child-post');
+	load_page(`/posts?operation=child&post_id=${post_id}&cursor=${page_obj.cursor}`, page_obj, csrfToken, '#child-post');
 }

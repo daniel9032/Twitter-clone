@@ -28,7 +28,7 @@ else if(follower_following === 'following'){
 }
 
 function fetch_follower(){
-	fetch(`/follower?username=${user}`, {
+	fetch(`/followers/${user}`, {
 		method: "GET"
 	})
 	.then(response => response.json())
@@ -66,7 +66,7 @@ function fetch_follower(){
 					}
 				}
 				else{
-					fetch(`/is_following?username=${follower}`, {
+					fetch(`/is_following/${follower}`, {
 						method: "GET"
 					})
 					.then(response => {
@@ -92,11 +92,8 @@ function fetch_follower(){
 				follow_button.addEventListener('click', function(e) {
 					let is_following = localStorage.getItem(`is_following__username_${follower}`);
 					if(is_following === 'true'){
-						fetch('/unfollow', {
+						fetch(`/unfollow/${follower}`, {
 					        method: "POST",
-					        body: JSON.stringify({
-					        	username: follower
-					        }),
 					        headers: {
 					            'X-CSRFToken': csrfToken
 					        }
@@ -109,14 +106,11 @@ function fetch_follower(){
 					    })
 					}
 					else{
-					    fetch('/follow', {
+					    fetch(`/follow/${follower}`, {
 					        method: "POST",
 					        headers: {
 					            'X-CSRFToken': csrfToken
-					        },
-					        body: JSON.stringify({
-					        	username: follower
-					        })
+					        }
 					    })
 					    .then(response => response.json())
 					    .then(message => {
@@ -140,7 +134,7 @@ function fetch_follower(){
 }
 
 function fetch_following(){
-	fetch(`/following?username=${user}`, {
+	fetch(`/followings/${user}`, {
 		method: "GET"
 	})
 	.then(response => response.json())
@@ -178,7 +172,7 @@ function fetch_following(){
 					}
 				}
 				else{
-					fetch(`/is_following?username=${following}`, {
+					fetch(`/is_following/${following}`, {
 						method: "GET"
 					})
 					.then(response => {
@@ -204,14 +198,11 @@ function fetch_following(){
 				follow_button.addEventListener('click', function(e) {
 					let is_following = localStorage.getItem(`is_following__username_${following}`);
 					if(is_following === 'true'){
-						fetch('/unfollow', {
+						fetch(`/unfollow/${following}`, {
 					        method: "POST",
 					        headers: {
 					            'X-CSRFToken': csrfToken
-					        },
-					        body: JSON.stringify({
-					        	username: following
-					        })
+					        }
 					    })
 					    .then(response => response.json())
 					    .then(message => {
@@ -221,11 +212,8 @@ function fetch_following(){
 					    })
 					}
 					else{
-						fetch('/follow', {
+						fetch(`/follow/${following}`, {
 					        method: "POST",
-					        body: JSON.stringify({
-					        	username: following
-					        }),
 					        headers: {
 					            'X-CSRFToken': csrfToken
 					        }

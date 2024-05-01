@@ -74,41 +74,35 @@ def register(request):
 
 
 def users(request, username: str):
-    try:
-        user = cache_user(username)
-        return render(request, "network/users.html", {'user': user})
-
-    except User.DoesNotExist:
+    user = cache_user(username)
+    if not user:
         return render(request, "network/error.html")
+    return render(request, "network/users.html", {'user': user})
 
 
 def follower(request, username: str):
-    try:
-        user = cache_user(username)
-        return render(request, "network/follower_following.html", {
-            'user': user, 
-            'follower_following': 'follower', 
-            'request_user': request.user
-        })
-
-    except User.DoesNotExist:
+    user = cache_user(username)
+    if not user:
         return render(request, "network/error.html")
+    return render(request, "network/follower_following.html", {
+        'user': user, 
+        'follower_following': 'follower', 
+        'request_user': request.user
+    })
 
 
 def following(request, username: str):
-    try:
-        user = cache_user(username)
-        return render(request, "network/follower_following.html", {
-            'user': user,
-            'follower_following': 'following',
-            'request_user': request.user
-        })
-
-    except User.DoesNotExist:
+    user = cache_user(username)
+    if not user:
         return render(request, "network/error.html")
+    return render(request, "network/follower_following.html", {
+        'user': user,
+        'follower_following': 'following',
+        'request_user': request.user
+    })
 
 
-def status(request, post_id: int):
+def status(request, post_id: str):
     if Post.objects.filter(pk=post_id).exists():
         return render(request, "network/status.html", {
             'post_id': post_id
@@ -125,7 +119,7 @@ def feed_following(request):
 #-----------------------------------API calls-----------------------------------
 
 
-def like(request):
+def like_post(request, post_id: str):
     if request.method != "POST":
         return JsonResponse({"error": "POST request required."}, status=405)
 
@@ -133,69 +127,151 @@ def like(request):
     if not request_user.is_authenticated:
         return JsonResponse({"message": "User is not logged in.", "action": "prompt_loggin"}, status=200)
 
-    data = loads(request.body)
-    post_id = data.get("post_id")
-    try:
-        post = cache_post(post_id)
-        if post in request_user.liked_post.all():
-            request_user.liked_post.remove(post)
-            return JsonResponse({"message": "Post unliked.", "action": "switch_to_like"}, status=200)
-        else:
-            post.like.add(request_user)
-            return JsonResponse({"message": "Post liked.", "action": "switch_to_unlike"}, status=200)
-
-    except Post.DoesNotExist:
+    post = cache_post(post_id)
+    if not post:
         return JsonResponse({"error": "Requested post does not exist."}, status=404)
+    if post in request_user.liked_post.all():
+        request_user.liked_post.remove(post)
+        return JsonResponse({"message": "Post unliked.", "action": "switch_to_like"}, status=200)
+    else:
+        post.like.add(request_user)
+        return JsonResponse({"message": "Post liked.", "action": "switch_to_unlike"}, status=200)
 
 
-def follow_user(request):
+def follow_user(request, username: str):
     if request.method != "POST":
         return JsonResponse({"error": "POST request required."}, status=405)
 
-    data = loads(request.body)
-    if data is not None:
-        username = data.get('username')
-        try:
-            user = cache_user(username)
-            request_user = request.user
-            if Follower.objects.filter(user=user).exists():
-                follower = Follower.objects.get(user=user)
-                follower.follower.add(request_user)
+    user = cache_user(username)
+    if not user:
+        return JsonResponse({"error": "Requested user does not exist."}, status=404)
+    request_user = request.user
+    if Follower.objects.filter(user=user).exists():
+        follower = Follower.objects.get(user=user)
+        follower.follower.add(request_user)
+    else:
+        follower = Follower(user=user)
+        follower.save()
+        follower.follower.add(request_user)
+
+    return JsonResponse({"message": "Followed."}, status=200)
+
+
+def unfollow_user(request, username: str):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required."}, status=405)
+
+    user = cache_user(username)
+    if not user:
+        return JsonResponse({"error": "Requested user does not exist."}, status=404)
+    follower = Follower.objects.get(user=user)
+    request_user = request.user
+    request_user.following.remove(follower)
+
+    return JsonResponse({"message": "Unfollowed."}, status=200)
+
+
+def get_posts(request):
+    if request.method != "GET":
+        return JsonResponse({"error": "GET request required."}, status=405)
+    PAGE_SIZE = 10
+
+    if 'operation' in request.GET:
+        operation = request.GET['operation']
+
+        # All posts
+        if operation == 'all':
+            if 'cursor' in request.GET:
+                cursor = request.GET['cursor']
+                if cursor == 'null':
+                    cursor = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                cursor = datetime.strptime(cursor, "%Y-%m-%d %H:%M:%S")
+                repost_query = Repost.objects.filter(timestamp__lt=cursor).order_by('-timestamp')[:PAGE_SIZE].prefetch_related('user', 'post', 'post__user')
+                post_query = Post.objects.filter(timestamp__lt=cursor).order_by('-timestamp')[:PAGE_SIZE].prefetch_related('user')
+                return fetch_posts_and_reposts(cursor, PAGE_SIZE, repost_query, post_query)
             else:
-                follower = Follower(user=user)
-                follower.save()
-                follower.follower.add(request_user)
+                return JsonResponse({"error": "Query parameter 'cursor' is required."}, status=400)
 
-            return JsonResponse({"message": "Followed."}, status=200)
+        else:
+            if 'username' in request.GET:
+                username = request.GET['username']
+                cursor = request.GET['cursor']
+                if cursor == 'null':
+                    cursor = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    cursor = datetime.strptime(cursor, "%Y-%m-%d %H:%M:%S")
 
-        except User.DoesNotExist:
-            return JsonResponse({"error": "Requested user does not exist."}, status=404)
-    else:
-        return JsonResponse({"error": "Query parameter 'username' is required."}, status=400)
+                # All posts from user
+                if operation == 'user':
+                    user = cache_user(username)
+                    if not user:
+                        return JsonResponse({"error": "Requested user does not exist."}, status=404)
+                    repost_query = Repost.objects.filter(timestamp__lt=cursor, user=user).order_by('-timestamp')[:PAGE_SIZE].prefetch_related('user', 'post', 'post__user')
+                    post_query = Post.objects.filter(timestamp__lt=cursor, user=user).order_by('-timestamp')[:PAGE_SIZE].prefetch_related('user')
+                    return fetch_posts_and_reposts(cursor, PAGE_SIZE, repost_query, post_query)
+
+                # All posts from all people whom the user is following
+                elif operation == 'following':
+                    user = cache_user(username)
+                    if not user:
+                        return JsonResponse({"error": "Requested user does not exist."}, status=404)
+                    following_list = user.following.all().select_related('user')
+                    following_list = [following.user for following in following_list] + [user]
+                    if following_list:
+                        repost_query = Repost.objects.filter(user__in=following_list, timestamp__lt=cursor).order_by('-timestamp')[:PAGE_SIZE].prefetch_related('user', 'post', 'post__user')
+                        post_query = Post.objects.filter(user__in=following_list, timestamp__lt=cursor).order_by('-timestamp')[:PAGE_SIZE].prefetch_related('user')
+                        return fetch_posts_and_reposts(cursor, PAGE_SIZE, repost_query, post_query)
+                    else:
+                        return JsonResponse({"message": "You're not following anyone."}, status=200)
+
+                else:
+                    return JsonResponse({"error": "Invalid operation received."}, status=405)
+
+            elif 'post_id' in request.GET:
+                post_id = request.GET['post_id']
+                if 'cursor' in request.GET:
+                    cursor = request.GET['cursor']
+
+                # Get parent post
+                if operation == 'parent':
+                    try:
+                        posts = []
+                        post = cache_post(post_id)
+                        posts.append(post)
+                        while post.parent_post:
+                            post_id = post.parent_post.id
+                            post = cache_post(post_id)
+                            posts.append(post)
+                        return JsonResponse([post.serialize() for post in posts], safe=False)
+                    except Post.DoesNotExist:
+                        return JsonResponse({"error": "Requested post does not exist."}, status=404)
+
+                # Get child posts from parent_post id
+                elif operation == 'child':
+                    if Post.objects.filter(parent_post=post_id).exists():
+                        if 'cursor' in request.GET:
+                            cursor = request.GET['cursor']
+                        if cursor == 'null':
+                            cursor = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        cursor = datetime.strptime(cursor, "%Y-%m-%d %H:%M:%S")
+                        posts = Post.objects.filter(parent_post=post_id, timestamp__lt=cursor).order_by('-timestamp').prefetch_related('user')[:PAGE_SIZE]
+                        if not posts:
+                            return JsonResponse([{"is_end": True}], safe=False)
+                        return JsonResponse([{'cursor': posts[len(posts) - 1].timestamp}] + [post.serialize() for post in posts], safe=False)
+
+                    else:
+                        return JsonResponse([{"is_end": True}], safe=False)
+            else:
+                return JsonResponse({"error": "Query parameter 'post_id' or 'username' is required."}, status=405)
 
 
-def unfollow_user(request):
-    if request.method != "POST":
-        return JsonResponse({"error": "POST request required."}, status=405)
+def alter_post(request, post_id: str):
 
-    data = loads(request.body)
-    if data is not None:
-        username = data.get('username')
-        try:
-            user = cache_user(username)
-            follower = Follower.objects.get(user=user)
-            request_user = request.user
-            request_user.following.remove(follower)
+    '''
+    POST request: create a new post under the post
+    PUT reqeust: edit the post's body 
+    DELETE request: delete the post
+    '''
 
-            return JsonResponse({"message": "Unfollowed."}, status=200)
-
-        except User.DoesNotExist:
-            return JsonResponse({"error": "Requested user does not exist."}, status=404)
-    else:
-        return JsonResponse({"error": "Query parameter 'username' is required."}, status=400)
-
-
-def post(request):
     if request.method == "POST":
         if not request.user.is_authenticated:
             return JsonResponse({"error": "User is not logged in."}, status=404)
@@ -203,18 +279,8 @@ def post(request):
         body = data.get("body")
         image = data.get("image") if "image" in data else None
         is_public = True
-        parent_post = None
+        parent_post = cache_post(post_id)
 
-        if "parent_post_id" in data:
-            parent_post_id = data.get("parent_post_id")
-            try:
-                if parent_post_id:
-                    parent_post_id = int(parent_post_id)
-                    parent_post = cache_post(parent_post_id)
-                else:
-                    parent_post = None
-            except:
-                return JsonResponse({"error": "Requested parent_post_id's format is incorrect."}, status=400)
         new_post = Post(
             user=request.user,
             body=body,
@@ -257,177 +323,97 @@ def post(request):
                 )
             )
         new_post.save()
+        return JsonResponse({"message": "Comment created."}, status=201)
+
+    elif request.method == 'PUT':
+        request_user = request.user
+        post = cache_post(post_id)
+        if not post:
+            return JsonResponse({"error": "Requested post does not exist."}, status=404)
+        if request_user.is_authenticated and request_user == post.user:
+            data = loads(request.body)
+            body = data.get("body")
+            post.body = body
+            post.save(update_fields=['body'])
+            cache.delete(key=f'post_{post_id}')
+            return JsonResponse({"message": "Post edited."}, status=200)
+        else:
+            return JsonResponse({"error": "Access denied. Not the original poster."}, status=403)
+
+    elif request.method == 'DELETE':
+        post = cache_post(post_id)
+        if not post:
+            return JsonResponse({"error": "Requested post does not exist."}, status=404)
+        if request.user.is_authenticated and request.user == post.user:
+            post.image.delete()
+            post.preview_image.delete()
+            post.delete()
+            cache.delete(key=f'post_{post_id}')
+            return JsonResponse({"message": "Post deleted."}, status=200)
+        else:
+            return JsonResponse({"error": "Access denied. Not the original poster."}, status=403)
+
+    else:
+        return JsonResponse({"error": "POST, PUT or DELETE request required."}, status=405)
+
+
+def create_post(request):
+    if request.method == "POST":
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "User is not logged in."}, status=404)
+        data = loads(request.body)
+        body = data.get("body")
+        image = data.get("image") if "image" in data else None
+        is_public = True
+
+        new_post = Post(
+            user=request.user,
+            body=body,
+            is_public=is_public,
+        )
+        if image:
+            file_type = image.split(',')[0].split('/')[1].split(';')[0]
+            image_file_name = uuid4()
+            preview_image_file_name = uuid4()
+            image = b64decode(image.split(',')[-1])
+            image = Image.open(BytesIO(image))
+            width, height = image.size
+            preview_image = image.resize((width * 2 // 3, height *2 // 3))
+
+            buffer = BytesIO()
+            image.save(fp=buffer, format=file_type)
+            image.close()
+            image = ContentFile(buffer.getvalue())
+            new_post.image.save(f'{image_file_name}.{file_type}', InMemoryUploadedFile(
+                    image,                                          # file
+                    None,                                           # field_name
+                    f'{image_file_name}.{file_type}',               # file name
+                    f'image/{file_type}',                           # content_type
+                    image.tell,                                     # size
+                    None,                                           # content_type_extra
+                )
+            )
+
+            buffer = BytesIO()
+            preview_image.save(fp=buffer, format=file_type)
+            preview_image = ContentFile(buffer.getvalue())
+            new_post.preview_image.save(f'{preview_image_file_name}.{file_type}', InMemoryUploadedFile(
+                    preview_image,                                  # file
+                    None,                                           # field_name
+                    f'{preview_image_file_name}.{file_type}',       # file name
+                    f'image/{file_type}',                           # content_type
+                    preview_image.tell,                             # size
+                    None,                                           # content_type_extra
+                )
+            )
+        new_post.save()
 
         return JsonResponse({"message": "Post created."}, status=201)
 
-    elif request.method == "GET":
-        PAGE_SIZE = 10
 
-        if 'operation' in request.GET:
-            operation = request.GET['operation']
-
-            # All posts
-            if operation == 'all':
-                if 'cursor' in request.GET:
-                    cursor = request.GET['cursor']
-                    if cursor == 'null':
-                        cursor = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    cursor = datetime.strptime(cursor, "%Y-%m-%d %H:%M:%S")
-                    repost_query = Repost.objects.filter(timestamp__lt=cursor).order_by('-timestamp')[:PAGE_SIZE].prefetch_related('user', 'post', 'post__user')
-                    post_query = Post.objects.filter(timestamp__lt=cursor).order_by('-timestamp')[:PAGE_SIZE].prefetch_related('user')
-                    return fetch_posts_and_reposts(cursor, PAGE_SIZE, repost_query, post_query)
-                    
-                else:
-                    return JsonResponse({"error": "Query parameter 'cursor' is required."}, status=400)
-
-            else:
-                if 'username' in request.GET:
-                    username = request.GET['username']
-                    cursor = request.GET['cursor']
-                    if cursor == 'null':
-                        cursor = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        cursor = datetime.strptime(cursor, "%Y-%m-%d %H:%M:%S")
-
-                    # All posts from user
-                    if operation == 'user':
-                        try:
-                            user = User.objects.get(username=username)
-                            repost_query = Repost.objects.filter(timestamp__lt=cursor, user=user).order_by('-timestamp')[:PAGE_SIZE].prefetch_related('user', 'post', 'post__user')
-                            post_query = Post.objects.filter(timestamp__lt=cursor, user=user).order_by('-timestamp')[:PAGE_SIZE].prefetch_related('user')
-                            return fetch_posts_and_reposts(cursor, PAGE_SIZE, repost_query, post_query)
-                            
-                        except User.DoesNotExist:
-                            return JsonResponse({"error": "Requested user does not exist."}, status=404)
-
-                    # All posts from all people whom the user is following
-                    elif operation == 'following':
-                        try:
-                            user = User.objects.get(username=username)
-                            following_list = user.following.all().select_related('user')
-                            following_list = [following.user for following in following_list] + [user]
-                            if following_list:
-                                repost_query = Repost.objects.filter(user__in=following_list, timestamp__lt=cursor).order_by('-timestamp')[:PAGE_SIZE].prefetch_related('user', 'post', 'post__user')
-                                post_query = Post.objects.filter(user__in=following_list, timestamp__lt=cursor).order_by('-timestamp')[:PAGE_SIZE].prefetch_related('user')
-                                return fetch_posts_and_reposts(cursor, PAGE_SIZE, repost_query, post_query)
-                            else:
-                                return JsonResponse({"message": "You're not following anyone."}, status=200)
-
-                        except User.DoesNotExist:
-                            return JsonResponse({"error": "Requested user does not exist."}, status=404)
-
-                    else:
-                        return JsonResponse({"error": "Invalid operation received."}, status=400)
-
-                elif 'post_id' in request.GET:
-                    post_id = request.GET['post_id']
-                    if 'cursor' in request.GET:
-                        cursor = request.GET['cursor']
-
-                    # Get parent post
-                    if operation == 'parent':
-                        try:
-                            post_id = int(post_id)
-
-                        except ValueError:
-                            return JsonResponse({"error": "Requested post_id's format is incorrect."}, status=400)
-                        try:
-                            posts = []
-                            post = cache_post(post_id)
-                            posts.append(post)
-                            while post.parent_post:
-                                post_id = post.parent_post.id
-                                post = cache_post(post_id)
-                                posts.append(post)
-                            return JsonResponse([post.serialize() for post in posts], safe=False)
-                        except Post.DoesNotExist:
-                            return JsonResponse({"error": "Requested post does not exist."}, status=404)
-
-                    # Get child posts from parent_post id
-                    elif operation == 'child':
-                        try:
-                            post_id = int(post_id)
-
-                        except ValueError:
-                            return JsonResponse({"error": "Requested post_id's format is incorrect."}, status=400)
-
-                        if Post.objects.filter(parent_post=post_id).exists():
-                            if 'cursor' in request.GET:
-                                cursor = request.GET['cursor']
-                            if cursor == 'null':
-                                cursor = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                            cursor = datetime.strptime(cursor, "%Y-%m-%d %H:%M:%S")
-                            posts = Post.objects.filter(parent_post=post_id, timestamp__lt=cursor).order_by('-timestamp').prefetch_related('user')[:PAGE_SIZE]
-                            if not posts:
-                                return JsonResponse([{"is_end": True}], safe=False)
-                            return JsonResponse([{'cursor': posts[len(posts) - 1].timestamp}] + [post.serialize() for post in posts], safe=False)
-
-                        else:
-                            return JsonResponse([{"is_end": True}], safe=False)
-                else:
-                    return JsonResponse({"error": "Id or username is required."}, status=400)
-
-    elif request.method == 'PUT':
-        if 'post_id' in request.GET:
-            try:
-                post_id = request.GET['post_id']
-                post_id = int(post_id)
-                request_user = request.user
-                if cache.get(key=f'post_{post_id}'):
-                    post = cache.get(key=f'post_{post_id}')
-                else:
-                    post = Post.objects.get(pk=post_id)
-                if request_user.is_authenticated and request_user == post.user:
-                    data = loads(request.body)
-                    body = data.get("body")
-                    post.body = body
-                    post.save(update_fields=['body'])
-
-                    if cache.get(key=f'post_{post_id}'):
-                        cache.delete(key=f'post_{post_id}')
-                    return JsonResponse({"message": "Post edited."}, status=200)
-                else:
-                    return JsonResponse({"error": "Access denied. Not the original poster."}, status=403)
-
-            except Post.DoesNotExist:
-                return JsonResponse({"error": "Requested post does not exist."}, status=404)
-
-            except ValueError:
-                return JsonResponse({"error": "Requested post id's format is incorrect."}, status=400)
-        else:
-            return JsonResponse({"error": "post id is required."}, status=400)
-
-    elif request.method == 'DELETE':
-        if 'post_id' in request.GET:
-            try:
-                post_id = request.GET['post_id']
-                post_id = int(post_id)
-                post = Post.objects.get(pk=post_id)
-                if request.user.is_authenticated and request.user == post.user:
-                    post.image.delete()
-                    post.preview_image.delete()
-                    post.delete()
-                    return JsonResponse({"message": "Post deleted."}, status=200)
-                else:
-                    return JsonResponse({"error": "Access denied. Not the original poster."}, status=403)
-
-            except Post.DoesNotExist:
-                return JsonResponse({"error": "Requested post does not exist."}, status=404)
-
-            except ValueError:
-                return JsonResponse({"error": "Requested post id's format is incorrect."}, status=400)
-        else:
-            return JsonResponse({"error": "post id is required."}, status=400)
-
-    else:
-        return JsonResponse({"error": "POST, GET, PUT or DELETE request required."}, status=405)
-
-
-def share_post(request):
+def share_post(request, post_id: str):
     if request.method != 'POST':
         return JsonResponse({"error": "PUT request required."}, status=405)
-
-    data = loads(request.body)
-    post_id = data.get("post_id")
 
     request_user = request.user
     post = cache_post(post_id)
@@ -439,257 +425,211 @@ def share_post(request):
         else:
             repost = Repost(post=post, user=request_user)
             repost.save()
-            return JsonResponse({"message": "Post shared."}, status=200)
+            return JsonResponse({"message": "Post shared."}, status=201)
     return JsonResponse({"message": "prompt_loggin"}, status=200)
 
-def get_follower(request):
+
+def get_followers(request, username: str):
     if request.method != 'GET':
         return JsonResponse({"error": "GET request required."}, status=405)
 
-    if 'username' in request.GET:
-        username = request.GET['username']
-        try:
-            user = cache_user(username)
+    try:
+        user = cache_user(username)
+        follower = Follower.objects.get(user=user)
+
+        follower_list = follower.follower.all()
+
+        return JsonResponse([follower.username for follower in follower_list], safe=False, status=200)
+
+    except User.DoesNotExist:
+        return JsonResponse({"error": "Requested user does not exist."}, status=404)
+
+    except Follower.DoesNotExist:
+        return JsonResponse([], safe=False, status=200)
+
+
+def get_followings(request, username: str):
+    if request.method != 'GET':
+        return JsonResponse({"error": "GET request required."}, status=405)
+
+    try:
+        user = cache_user(username)
+        following_list = user.following.all().select_related('user')
+
+        return JsonResponse([following.user.username for following in following_list], safe=False, status=200)
+
+    except User.DoesNotExist:
+        return JsonResponse({"error": "Requested user does not exist."}, status=404)
+
+
+def get_followers_count(request, username: str):
+    if request.method != 'GET':
+        return JsonResponse({"error": "GET request required."}, status=405)
+
+    try:
+        user = cache_user(username)
+        follower_count = 0
+        if Follower.objects.filter(user=user).exists():
             follower = Follower.objects.get(user=user)
-            follower_list = follower.follower.all().select_related('user')
+            follower_count = follower.follower.count()
+        return JsonResponse({"follower_count": follower_count}, status=200)
 
-            return JsonResponse([follower.user.username for follower in follower_list], safe=False)
-
-        except User.DoesNotExist:
-            return JsonResponse({"error": "Requested user does not exist."}, status=404)
-
-        except Follower.DoesNotExist:
-            return JsonResponse([], safe=False)
-    else:
-        return JsonResponse({"error": "Query parameter 'username' is required."}, status=400)
+    except User.DoesNotExist:
+        return JsonResponse({"error": "Requested user does not exist."}, status=404)
 
 
-def get_following(request):
+def get_followings_count(request, username: str):
     if request.method != 'GET':
         return JsonResponse({"error": "GET request required."}, status=405)
 
-    if 'username' in request.GET:
-        username = request.GET['username']
-        try:
-            user = cache_user(username)
-            following_list = user.following.all().select_related('user')
+    try:
+        user = User.objects.get(username=username)
+        following_count = user.following.count()
+        return JsonResponse({"following_count": following_count}, status=200)
 
-            return JsonResponse([following.user.username for following in following_list], safe=False)
-
-        except User.DoesNotExist:
-            return JsonResponse({"error": "Requested user does not exist."}, status=404)
-    else:
-        return JsonResponse({"error": "Query parameter 'username' is required."}, status=400)
+    except User.DoesNotExist:
+        return JsonResponse({"error": "Requested user does not exist."}, status=404)
 
 
-def get_follower_count(request):
+def get_like_number(request, post_id: str):
     if request.method != 'GET':
         return JsonResponse({"error": "GET request required."}, status=405)
 
-    if 'username' in request.GET:
-        username = request.GET['username']
-        try:
-            user = cache_user(username)
-            follower_count = 0
-            if Follower.objects.filter(user=user).exists():
-                follower = Follower.objects.get(user=user)
-                follower_count = follower.follower.count()
-            return JsonResponse({"follower_count": follower_count})
-
-        except User.DoesNotExist:
-            return JsonResponse({"error": "Requested user does not exist."}, status=404)
-    else:
-        return JsonResponse({"error": "Query parameter 'username' is required."}, status=400)
+    post = cache_post(post_id)
+    if not post:
+        return JsonResponse({"error": "Requested post does not exist."}, status=404)
+    like_number = post.like.count()
+    return JsonResponse({"like_number": like_number}, status=200)
 
 
-def get_following_count(request):
+def get_repost_number(request, post_id: str):
     if request.method != 'GET':
         return JsonResponse({"error": "GET request required."}, status=405)
 
-    if 'username' in request.GET:
-        username = request.GET['username']
-        try:
-            user = User.objects.get(username=username)
-            following_count = user.following.count()
-            return JsonResponse({"following_count": following_count})
-
-        except User.DoesNotExist:
-            return JsonResponse({"error": "Requested user does not exist."}, status=404)
-    else:
-        return JsonResponse({"error": "Query parameter 'username' is required."}, status=400)
+    post = cache_post(post_id)
+    if not post:
+        return JsonResponse({"error": "Requested post does not exist."}, status=404)
+    repost_number = Repost.objects.filter(post=post, user__isnull=False).count()
+    return JsonResponse({"repost_number": repost_number}, status=200)
 
 
-def get_like_number(request):
+def get_message_number(request, post_id: str):
     if request.method != 'GET':
         return JsonResponse({"error": "GET request required."}, status=405)
 
-    if 'post_id' in request.GET:
-        post_id = request.GET['post_id']
-        try:
-            post = cache_post(post_id)
-            like_number = post.like.count()
-            return JsonResponse({"like_number": like_number})
-
-        except Post.DoesNotExist:
-            return JsonResponse({"error": "Requested post does not exist."}, status=404)
+    if Post.objects.filter(parent_post=post_id).exists():
+        message_number = cache_message_number(post_id)
+        return JsonResponse({"message_number": message_number}, status=200)
     else:
-        return JsonResponse({"error": "Query parameter 'post_id' is required."}, status=400)
+        return JsonResponse({"message_number": 0}, status=200)
 
 
-def get_repost_number(request):
-    if request.method != 'GET':
-        return JsonResponse({"error": "GET request required."}, status=405)
-
-    if 'post_id' in request.GET:
-        post_id = request.GET['post_id']
-        try:
-            post = cache_post(post_id)
-            repost_number = Repost.objects.filter(post=post, user__isnull=False).count()
-            return JsonResponse({"repost_number": repost_number})
-
-        except Post.DoesNotExist:
-            return JsonResponse({"error": "Requested post does not exist."}, status=404)
-    else:
-        return JsonResponse({"error": "Query parameter 'post_id' is required."}, status=400)
-
-
-def get_message_number(request):
-    if request.method != 'GET':
-        return JsonResponse({"error": "GET request required."}, status=405)
-
-    if 'post_id' in request.GET:
-        post_id = request.GET['post_id']
-
-        if Post.objects.filter(parent_post=post_id).exists():
-            message_number = cache_message_number(post_id)
-            return JsonResponse({"message_number": message_number})
-        else:
-            return JsonResponse({"message_number": 0})
-    else:
-        return JsonResponse({"error": "Query parameter 'post_id' is required."}, status=400)
-
-
-def check_is_liked(request):
+def check_is_liked(request, post_id: str):
     if request.method != 'GET':
         return JsonResponse({"error": "GET request required."}, status=405)
     request_user = request.user
     if not request_user.is_authenticated:
         return JsonResponse({"is_liked": False}, status=200)
 
-    if 'post_id' in request.GET:
-        post_id = request.GET['post_id']
-        try:
-            post = cache_post(post_id)
-            if post in request_user.liked_post.all():
-                return JsonResponse({"is_liked": True}, status=200)
-            else:
-                return JsonResponse({"is_liked": False}, status=200)
-        except Post.DoesNotExist:
-            return JsonResponse({"error": "Requested post does not exist."}, status=404)
+    post = cache_post(post_id)
+    if not post:
+        return JsonResponse({"error": "Requested post does not exist."}, status=404)
+    if post in request_user.liked_post.all():
+        return JsonResponse({"is_liked": True}, status=200)
     else:
-        return JsonResponse({"error": "Query parameter 'post_id' is required."}, status=400)
+        return JsonResponse({"is_liked": False}, status=200)
 
 
-def check_is_shared(request):
+def check_is_shared(request, post_id: str):
     if request.method != 'GET':
         return JsonResponse({"error": "GET request required."}, status=405)
     request_user = request.user
     if not request_user.is_authenticated:
         return JsonResponse({"is_shared": False}, status=200)
 
-    if 'post_id' in request.GET:
-        post_id = request.GET['post_id']
-        try:
-            post = cache_post(post_id)
-            if Repost.objects.filter(post=post, user=request_user).exists():
-                return JsonResponse({"is_shared": True}, status=200)
-            else:
-                return JsonResponse({"is_shared": False}, status=200)
-        except Post.DoesNotExist:
-            return JsonResponse({"error": "Requested post does not exist."}, status=404)
-        except Repost.DoesNotExist:
-            return JsonResponse({"is_shared": False}, status=200)
+    post = cache_post(post_id)
+    if not post:
+        return JsonResponse({"error": "Requested post does not exist."}, status=404)
+    if Repost.objects.filter(post=post, user=request_user).exists():
+        return JsonResponse({"is_shared": True}, status=200)
     else:
-        return JsonResponse({"error": "Query parameter 'post_id' is required."}, status=400)
+        return JsonResponse({"is_shared": False}, status=200)
 
 
-def check_is_following(request):
+def check_is_following(request, username: str):
     if request.method != 'GET':
         return JsonResponse({"error": "GET request required."}, status=405)
 
-    if 'username' in request.GET:
-        username = request.GET['username']
-        request_user = request.user
-        if not request_user.is_authenticated:
-            return JsonResponse({"error": "Requested user is not logged in."}, status=404)
-        try:
-            user = User.objects.get(username=username)
-            follower = Follower.objects.get(user=user)
-            is_following = False
-            if follower in request_user.following.all():
-                is_following = True
-            return JsonResponse({"is_following": is_following}, status=200)
+    request_user = request.user
+    if not request_user.is_authenticated:
+        return JsonResponse({"error": "Requested user is not logged in."}, status=404)
+    try:
+        user = cache_user(username)
+        if not user:
+            return JsonResponse({"error": "Requested user does not exist."}, status=404)
+        follower = Follower.objects.get(user=user)
+        is_following = False
+        if follower in request_user.following.all():
+            is_following = True
+        return JsonResponse({"is_following": is_following}, status=200)
 
-        except User.DoesNotExist:
-            return JsonResponse({"message": "Requested user does not exist."}, status=404)
+    except Follower.DoesNotExist:
+        return JsonResponse({"is_following": False}, status=200)
 
-        except Follower.DoesNotExist:
-            return JsonResponse({"is_following": False}, status=200)
-
-        except AttributeError:
-            return JsonResponse({"is_following": False}, status=200)
-    else:
-        return JsonResponse({"error": "Query parameter 'username' is required."}, status=400)
+    except AttributeError:
+        return JsonResponse({"is_following": False}, status=200)
 
 
-def check_is_original_poster(request):
+def check_is_original_poster(request, post_id: str):
     if request.method != 'GET':
         return JsonResponse({"error": "GET request required."}, status=405)
 
-    if 'post_id' in request.GET:
-        post_id = request.GET['post_id']
-        request_user = request.user
-        if not request_user.is_authenticated:
+    request_user = request.user
+    if not request_user.is_authenticated:
+        return JsonResponse({"is_original_poster": False}, status=200)
+    try:
+        if Post.objects.filter(pk=post_id, user=request_user).exists():
+            return JsonResponse({"is_original_poster": True}, status=200)
+        else:
             return JsonResponse({"is_original_poster": False}, status=200)
-        try:
-            if Post.objects.filter(pk=post_id, user=request_user).exists():
-                return JsonResponse({"is_original_poster": True}, status=200)
-            else:
-                return JsonResponse({"is_original_poster": False}, status=200)
 
-        except Post.DoesNotExist:
-            return JsonResponse({"error": "Requested post does not exist."}, status=404)
+    except Post.DoesNotExist:
+        return JsonResponse({"error": "Requested post does not exist."}, status=404)
 
-    else:
-        return JsonResponse({"error": "Query parameter 'post_id' is required."}, status=400)
 
 
 #----------------------------------utility functions----------------------------------
 
 
-def cache_post(post_id):
+def cache_post(post_id: str):
     if not cache.get(key=f'post_{post_id}'):
-        post = Post.objects.get(pk=post_id)
-        cache.set(
-            key=f'post_{post_id}',
-            value=post,
-            timeout=60 * 5
-        )
+        try:
+            post = Post.objects.get(pk=post_id)
+            cache.set(
+                key=f'post_{post_id}',
+                value=post,
+                timeout=60 * 5
+            )
+        except Post.DoesNotExist:
+            return None
     return cache.get(f'post_{post_id}')
 
 
-def cache_user(username):
+def cache_user(username: str):
     if not cache.get(key=f'user_{username}'):
-        user = User.objects.get(username=username)
-        cache.set(
-            key=f'user_{username}',
-            value=user,
-            timeout=60 * 15
-        )
+        try:
+            user = User.objects.get(username=username)
+            cache.set(
+                key=f'user_{username}',
+                value=user,
+                timeout=60 * 15
+            )
+        except User.DoesNotExist:
+            return None
     return cache.get(f'user_{username}')
 
 
-def cache_message_number(post_id):
+def cache_message_number(post_id: str):
     if not cache.get(key=f'post_message_number_{post_id}'):
         message_number = Post.objects.filter(parent_post=post_id).count()
         cache.set(
@@ -700,7 +640,7 @@ def cache_message_number(post_id):
     return cache.get(f'post_message_number_{post_id}')
 
 
-def fetch_posts_and_reposts(cursor, PAGE_SIZE, repost_query, post_query):
+def fetch_posts_and_reposts(cursor: str, PAGE_SIZE: int, repost_query, post_query):
     all_posts = []
     all_posts_repost_user = []
     i = j = 0

@@ -17,5 +17,5 @@ window.onscroll = function() {
 };
 
 function load_front_page(){
-	load_page(`/post?operation=following&username=${user}&cursor=${page_obj.cursor}`, page_obj, csrfToken, '#main-frame');
+	load_page(`/posts?operation=following&username=${user}&cursor=${page_obj.cursor}`, page_obj, csrfToken, '#main-frame');
 }

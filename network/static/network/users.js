@@ -29,7 +29,7 @@ window.onscroll = function() {
 
 
 function load_user_page(){
-	load_page(`/post?cursor=${page_obj.cursor}&operation=user&username=${user}`, page_obj, csrfToken, '#main-frame');
+	load_page(`/posts?cursor=${page_obj.cursor}&operation=user&username=${user}`, page_obj, csrfToken, '#main-frame');
 }
 
 
@@ -48,7 +48,7 @@ function load_user_info(){
 		}
 	}
 	else{
-		fetch(`/is_following?username=${user}`, {
+		fetch(`/is_following/${user}`, {
 			method: "GET"
 		})
 		.then(response => {
@@ -83,7 +83,7 @@ function load_user_info(){
 }
 
 function get_follower_count(){
-	fetch(`/follower_count?username=${user}`, {
+	fetch(`/followers_count/${user}`, {
 		method: "GET"
 	})
 	.then(response => response.json())
@@ -93,7 +93,7 @@ function get_follower_count(){
 }
 
 function get_following_count(){
-	fetch(`/following_count?username=${user}`, {
+	fetch(`/followings_count/${user}`, {
 		method: "GET"
 	})
 	.then(response => response.json())
@@ -105,14 +105,11 @@ function get_following_count(){
 function follow(){
 	let is_following = localStorage.getItem(`is_following__username_${user}`)
 	if(is_following === 'true'){
-		fetch('/unfollow', {
+		fetch(`/unfollow/${user}`, {
 	        method: "POST",
 	        headers: {
 	            'X-CSRFToken': csrfToken
-	        },
-	        body: JSON.stringify({
-	        	username: user
-	        })
+	        }
 	    })
 	    .then(response => response.json())
 	    .then(data => {
@@ -122,14 +119,11 @@ function follow(){
 	    })
 	}
 	else{
-		fetch('/follow', {
+		fetch(`/follow/${user}`, {
 	        method: "POST",
 	        headers: {
 	            'X-CSRFToken': csrfToken
-	        },
-	        body: JSON.stringify({
-	        	username: user
-	        })
+	        }
 	    })
 	    .then(response => response.json())
 	    .then(data => {

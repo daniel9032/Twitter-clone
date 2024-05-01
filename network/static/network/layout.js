@@ -8,9 +8,6 @@ if(compose_submit){
 		let body = document.querySelector('#compose-body').value;
 		let image = document.querySelector('.image-upload-btn').files[0];
 		let post_id = document.querySelector('#post_id');
-		if(post_id){
-			post_id = post_id.innerText;
-		}
 
 		if(image){
 			let reader = new FileReader();
@@ -19,9 +16,14 @@ if(compose_submit){
 				let data = {
 					image: reader.result,
 					body: body,
-					parent_post_id: post_id,
 				};
-				post(data, csrfToken);
+				if(post_id){
+					post_id = post_id.innerText;
+					comment(data, csrfToken, post_id);
+				}
+				else{
+					post(data, csrfToken);
+				}
 			};
 			reader.onerror = function (error) {
 				console.log('Error: ', error);
@@ -30,9 +32,14 @@ if(compose_submit){
 		else{
 			let data = {
 				body: body,
-				parent_post_id: post_id,
 			};
-			post(data, csrfToken);
+			if(post_id){
+				post_id = post_id.innerText;
+				comment(data, csrfToken, post_id);
+			}
+			else{
+				post(data, csrfToken);
+			}
 		}
 	});
 }
@@ -49,7 +56,21 @@ function post(data, csrfToken) {
 	})
 	.then(response => response.json())
 	.then(data => {
-		console.log(data);
+		document.querySelector('#compose-body').value = '';
+	})
+}
+
+function comment(data, csrfToken, post_id) {
+	fetch(`/post/${post_id}`, {
+		method: 'POST',
+		body: JSON.stringify(data),
+		headers: {
+			'Content-Type': 'application/json',
+        	'X-CSRFToken': csrfToken,
+    	}
+	})
+	.then(response => response.json())
+	.then(data => {
 		document.querySelector('#compose-body').value = '';
 	})
 }

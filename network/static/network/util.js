@@ -143,11 +143,8 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 
 					like_button.addEventListener('click', function(event) {
 						event.stopPropagation();
-						fetch('/like', {
+						fetch(`/like/${post_id}`, {
 							method: "POST",
-							body: JSON.stringify({
-								post_id: post_id
-							}),
 							headers: {
 								'X-CSRFToken': csrf_token
 							}
@@ -176,11 +173,8 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 
 					repost_button.addEventListener('click', function(event) {
 						event.stopPropagation();
-						fetch('/repost', {
+						fetch(`/repost/${post_id}`, {
 							method: "POST",
-							body: JSON.stringify({
-								post_id: post_id
-							}),
 							headers: {
 								'X-CSRFToken': csrf_token
 							}
@@ -253,7 +247,7 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 						});
 
 						edit_compose_submit.addEventListener('click', function() {
-							fetch(`/post?post_id=${post_id}`, {
+							fetch(`/post/${post_id}`, {
 								method: "PUT",
 								body: JSON.stringify({
 									body: edit_compose_body.value
@@ -281,7 +275,7 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 					dropdown_item_delete.addEventListener('click', function(event) {
 						event.stopPropagation();
 						dropdown_toggle_button.nextElementSibling.classList.toggle('show');
-						fetch(`/post?post_id=${post_id}`, {
+						fetch(`/post/${post_id}`, {
 							method: "DELETE",
 							headers: {
 								'X-CSRFToken': csrf_token
@@ -300,18 +294,14 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 						if(localStorage.getItem(`is_following__username_${user}`)){
 							let is_following = localStorage.getItem(`is_following__username_${user}`);
 							if(is_following === 'true'){
-								fetch(`/unfollow`, {
+								fetch(`/unfollow/${user}`, {
 									method: "POST",
 									headers: {
 										'X-CSRFToken': csrf_token
-									},
-									body: JSON.stringify({
-							        	username: user
-							        })
+									}
 								})
 								.then(response => response.json())
 								.then(message => {
-									//console.log(message);
 									dropdown_item_follow.innerHTML = `Follow ${user}`;
 									let follow_button = document.querySelector('#follow-button');
 									let follower_count = document.querySelector('#follower-count');
@@ -325,14 +315,11 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 								});
 							}
 							else{
-								fetch(`/follow`, {
+								fetch(`/follow/${user}`, {
 									method: "POST",
 									headers: {
 										'X-CSRFToken': csrf_token
-									},
-									body: JSON.stringify({
-							        	username: user
-							        })
+									}
 								})
 								.then(response => response.json())
 								.then(message => {
@@ -351,20 +338,17 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 							}
 						}
 						else{
-							fetch(`/is_following?username=${user}`, {
+							fetch(`/is_following/${user}`, {
 								method: "GET",
 							})
 							.then(response => response.json())
 							.then(data => {
 								if(data.is_following){
-									fetch(`/unfollow`, {
+									fetch(`/unfollow/${user}`, {
 										method: "POST",
 										headers: {
 											'X-CSRFToken': csrf_token
-										},
-										body: JSON.stringify({
-								        	username: user
-								        })
+										}
 									})
 									.then(response => response.json())
 									.then(message => {
@@ -381,14 +365,11 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 									});
 								}
 								else{
-									fetch(`/follow`, {
+									fetch(`/follow/${user}`, {
 										method: "POST",
 										headers: {
 											'X-CSRFToken': csrf_token
-										},
-										body: JSON.stringify({
-								        	username: user
-								        })
+										}
 									})
 									.then(response => response.json())
 									.then(message => {
@@ -410,9 +391,9 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 					})
 
 					const urls = [
-						`/like_number?post_id=${post_id}`,
-						`/message_number?post_id=${post_id}`,
-						`/repost_number?post_id=${post_id}`,
+						`/like_number/${post_id}`,
+						`/message_number/${post_id}`,
+						`/repost_number/${post_id}`,
 					]
 
 					if(localStorage.getItem(`is_liked__post_id_${post_id}`)){
@@ -425,7 +406,7 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 						}
 					}
 					else{
-						urls.push(`/is_liked?post_id=${post_id}`);
+						urls.push(`/is_liked/${post_id}`);
 					}
 
 					if(localStorage.getItem(`is_shared__post_id_${post_id}`)){
@@ -438,7 +419,7 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 						}
 					}
 					else{
-						urls.push(`/is_shared?post_id=${post_id}`);
+						urls.push(`/is_shared/${post_id}`);
 					}
 
 					if(localStorage.getItem(`is_original_poster__post_id_${post_id}`)){
@@ -452,7 +433,7 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 						}
 					}
 					else{
-						urls.push(`/is_original_poster?post_id=${post_id}`);
+						urls.push(`/is_original_poster/${post_id}`);
 					}
 
 					if(localStorage.getItem(`is_following__username_${user}`)){
@@ -465,7 +446,7 @@ export function load_page(op_string, page_obj, csrf_token, div_name){
 						}
 					}
 					else{
-						urls.push(`/is_following?username=${user}`);
+						urls.push(`/is_following/${user}`);
 					}
 
 					async function fetchMultipleUrls(urls) {
